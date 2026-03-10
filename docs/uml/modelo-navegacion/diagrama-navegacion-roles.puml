@@ -1,0 +1,97 @@
+@startuml
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam ArrowThickness 1
+skinparam ArrowColor #4A6072
+skinparam defaultFontName Segoe UI
+skinparam rectangle {
+  BorderColor #AABBCD
+  FontColor #1E2F3F
+}
+title UML Site Map - Navegacion Web Aerolinea
+
+rectangle "Zona Publica" as Publico {
+  rectangle "Home" as Home
+  rectangle "Buscar Vuelos" as Buscar
+  rectangle "Resultados" as Resultados
+  rectangle "Detalle Vuelo" as Detalle
+  rectangle "Login" as Login
+  rectangle "Registro" as Registro
+}
+
+rectangle "Cliente" as Cliente {
+  rectangle "Dashboard Cliente" as C_Dash
+  rectangle "Menu Cliente" as C_Menu
+  rectangle "Mis Reservas" as C_Reservas
+  rectangle "Realizar Reserva" as C_Reserva
+  rectangle "Paquetes Adicionales" as C_Paquetes
+  rectangle "Confirmacion" as C_Confirmacion
+}
+
+rectangle "Agente" as Agente {
+  rectangle "Dashboard Agente" as A_Dash
+  rectangle "Menu Agente" as A_Menu
+  rectangle "Gestionar Reservas" as A_Gestion
+  rectangle "Asignar Asientos" as A_Asientos
+}
+
+rectangle "Super Admin" as Admin {
+  rectangle "Dashboard Admin" as S_Dash
+  rectangle "Menu Admin" as S_Menu
+  rectangle "CRUD Vuelos" as S_Vuelos
+  rectangle "Paquetes" as S_Paquetes
+  rectangle "Clientes" as S_Clientes
+  rectangle "Destinos" as S_Destinos
+  rectangle "Reportes" as S_Reportes
+}
+
+rectangle "Control de Acceso" as Auth {
+  rectangle "Validar Credenciales" as Validar
+  rectangle "Resolver Rol" as Rol
+}
+
+' Navegacion publica base
+Home --> Buscar
+Buscar --> Resultados
+Resultados --> Detalle
+Home --> Login
+Home --> Registro
+
+' Flujo principal de reserva + compra
+Detalle --> C_Reserva : [si autenticado cliente]
+Detalle --> Login : [si no autenticado]
+Login --> Validar
+Registro --> Validar
+Validar --> Rol
+Rol --> C_Dash : [rol = Cliente]
+Rol --> A_Dash : [rol = Agente]
+Rol --> S_Dash : [rol = Super Admin]
+
+C_Reserva --> C_Paquetes : seleccionar extras
+C_Paquetes --> C_Confirmacion : pagar y confirmar
+C_Confirmacion --> C_Reservas : ver reserva creada
+
+' Menus por rol
+C_Dash --> C_Menu
+C_Menu --> C_Reservas
+C_Menu --> C_Reserva
+C_Menu --> C_Paquetes
+
+A_Dash --> A_Menu
+A_Menu --> A_Gestion
+A_Menu --> A_Asientos
+A_Gestion --> A_Asientos : asignacion en postventa
+
+S_Dash --> S_Menu
+S_Menu --> S_Vuelos
+S_Menu --> S_Paquetes
+S_Menu --> S_Clientes
+S_Menu --> S_Destinos
+S_Menu --> S_Reportes
+
+' Enlaces operativos cruzados
+C_Reservas --> Buscar : nueva compra
+A_Gestion --> C_Reservas : consulta de estado
+S_Vuelos --> Resultados : impacta inventario visible
+S_Paquetes --> C_Paquetes : define catalogo de extras
+@enduml

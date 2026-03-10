@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diagrama de Navegacion UML - Aerolinea</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --line: #d7e0ea;
+      --text: #10243a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 0.98rem;
+    }
+
+    .wrap {
+      height: calc(100vh - 49px);
+      overflow: auto;
+      padding: 12px;
+    }
+
+    .diagram {
+      min-width: 2200px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      padding: 16px;
+    }
+
+    .mermaid svg {
+      width: 100%;
+      height: auto;
+      max-width: none;
+    }
+  </style>
+</head>
+<body>
+  <header>Site Map UML - Navegacion con Roles (Cliente, Agente, Super Admin)</header>
+
+  <main class="wrap">
+    <section class="diagram">
+      <div class="mermaid">
+flowchart LR
+  subgraph PUB["Zona Publica"]
+    H[Home]
+    BV[Buscar Vuelos]
+    RES[Resultados]
+    DET[Detalle Vuelo]
+    LOG[Login]
+    REG[Registro]
+
+    H --> BV
+    BV --> RES
+    RES --> DET
+    H --> LOG
+    H --> REG
+  end
+
+  subgraph AUTH["Autenticacion"]
+    VC[Validar Credenciales]
+    ROL{Resolver Rol}
+
+    LOG --> VC
+    REG --> VC
+    VC --> ROL
+  end
+
+  subgraph CLI["Cliente"]
+    C_DASH[Dashboard Cliente]
+    C_MENU[Menu Cliente]
+    C_MIS[Mis Reservas]
+    C_RES[Realizar Reserva]
+    C_PAQ[Paquetes Adicionales]
+    C_CONF[Confirmacion]
+
+    C_DASH --> C_MENU
+    C_MENU --> C_MIS
+    C_MENU --> C_RES
+    C_MENU --> C_PAQ
+    C_RES --> C_PAQ
+    C_PAQ --> C_CONF
+    C_CONF --> C_MIS
+  end
+
+  subgraph AGE["Agente"]
+    A_DASH[Dashboard Agente]
+    A_MENU[Menu Agente]
+    A_GEST[Gestionar Reservas]
+    A_ASI[Asignar Asientos]
+
+    A_DASH --> A_MENU
+    A_MENU --> A_GEST
+    A_MENU --> A_ASI
+    A_GEST --> A_ASI
+  end
+
+  subgraph ADM["Super Admin"]
+    S_DASH[Dashboard Admin]
+    S_MENU[Menu Admin]
+    S_VUE[CRUD Vuelos]
+    S_PAQ[Paquetes]
+    S_CLI[Clientes]
+    S_DES[Destinos]
+    S_REP[Reportes]
+
+    S_DASH --> S_MENU
+    S_MENU --> S_VUE
+    S_MENU --> S_PAQ
+    S_MENU --> S_CLI
+    S_MENU --> S_DES
+    S_MENU --> S_REP
+  end
+
+  DET -->|si autenticado cliente| C_RES
+  DET -->|si no autenticado| LOG
+
+  ROL -->|Cliente| C_DASH
+  ROL -->|Agente| A_DASH
+  ROL -->|Super Admin| S_DASH
+
+  S_VUE -->|actualiza oferta visible| RES
+  S_PAQ -->|actualiza extras| C_PAQ
+  A_GEST -->|consulta estado| C_MIS
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "default" });
+  </script>
+</body>
+</html>
