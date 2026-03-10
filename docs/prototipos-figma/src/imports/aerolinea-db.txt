@@ -1,0 +1,350 @@
+Actúa como un **arquitecto senior de bases de datos especializado en PostgreSQL y sistemas de reservas de aerolíneas**, con conocimiento en sistemas similares a **Avianca, LATAM y plataformas de reserva como Despegar**.
+
+Debes generar **un script SQL completo, limpio y ejecutable en PostgreSQL** que cree y pueble una base de datos para un **sistema web académico de gestión de reservas de una aerolínea**.
+
+El diseño debe seguir estrictamente el alcance del siguiente proyecto universitario de **Ambiente Web I**, por lo que debes **respetar exactamente las entidades, relaciones y funcionalidades descritas**.
+
+---
+
+# OBJETIVO DEL SCRIPT
+
+Construir una base de datos que soporte una aplicación web que permita:
+
+* Registrar y gestionar clientes
+* Gestionar vuelos
+* Realizar reservas
+* Comprar tiquetes
+* Adquirir paquetes turísticos asociados al destino
+* Administrar estados e historial de reservas
+* Generar reportes comerciales y operativos
+
+La base de datos debe ser **normalizada, clara y lista para integrarse con una aplicación web bajo arquitectura MVC**.
+
+---
+
+# REGLAS OBLIGATORIAS
+
+1. El script debe ejecutarse **sin errores en PostgreSQL**.
+2. Usar:
+
+* SERIAL para claves primarias
+* FOREIGN KEY
+* NOT NULL
+* CHECK cuando aplique
+* nombres de tablas en singular
+* nombres de columnas claros en español
+
+3. Incluir **comentarios SQL explicando las decisiones importantes**.
+
+4. No agregar módulos fuera del alcance del proyecto.
+
+NO incluir cosas como:
+
+* gestión de aeronaves
+* tripulación
+* mantenimiento
+* inventario de asientos complejo
+* programas de millas
+* sistemas de pagos externos
+
+El modelo debe mantenerse **simple y académico**.
+
+---
+
+# ESTRUCTURA OBLIGATORIA DEL SCRIPT
+
+## 1 Creación del esquema
+
+DROP SCHEMA IF EXISTS aerolinea CASCADE;
+CREATE SCHEMA aerolinea;
+SET search_path TO aerolinea;
+
+---
+
+# 2 TABLAS DEL SISTEMA
+
+Debes crear al menos las siguientes tablas.
+
+## Ubicación geográfica
+
+pais
+
+* id
+* nombre
+
+departamento
+
+* id
+* nombre
+* id_pais
+
+ciudad
+
+* id
+* nombre
+* id_departamento
+
+---
+
+## Clientes
+
+cliente
+
+* id
+* numero_identificacion
+* nombres
+* apellidos
+* correo
+* direccion
+* telefono_principal
+* telefono_alterno
+* id_pais
+* id_departamento
+* id_ciudad
+
+Un cliente puede tener múltiples reservas.
+
+---
+
+## Vuelos
+
+vuelo
+
+* id
+* codigo_vuelo
+* ciudad_origen
+* ciudad_destino
+* fecha_hora_salida
+* fecha_hora_llegada
+* capacidad_pasajeros
+* precio_base
+* estado_vuelo
+
+Estados permitidos:
+
+Programado
+Abordando
+En vuelo
+Finalizado
+Cancelado
+
+---
+
+## Reservas
+
+reserva
+
+* id
+* id_cliente
+* id_vuelo
+* fecha_reserva
+* valor_total
+* id_estado_reserva
+
+Una reserva puede tener **uno o varios tiquetes**.
+
+---
+
+## Estados de reserva
+
+estado_reserva
+
+* id
+* nombre
+
+Ejemplos:
+
+Reservada
+Confirmada
+Cancelada
+Expirada
+
+---
+
+## Historial de estados
+
+historial_estado_reserva
+
+* id
+* id_reserva
+* id_estado_reserva
+* fecha_cambio
+
+Permite registrar cada cambio de estado.
+
+---
+
+## Tiquetes
+
+tiquete
+
+* id
+* id_reserva
+* numero_asiento
+* clase
+* precio_final
+
+Clases permitidas:
+
+Económica
+Ejecutiva
+Primera
+
+---
+
+## Paquetes turísticos
+
+paquete_turistico
+
+* id
+* nombre
+* descripcion
+* destino
+* precio
+* estado
+
+Estados:
+
+Disponible
+No disponible
+
+---
+
+## Relación reserva-paquete
+
+reserva_paquete
+
+* id
+* id_reserva
+* id_paquete
+
+Una reserva puede incluir **0, 1 o varios paquetes**.
+
+---
+
+# 3 DATOS DE EJEMPLO
+
+Insertar datos suficientes para pruebas.
+
+## Países (mínimo 8)
+
+Ejemplo:
+
+Colombia
+Estados Unidos
+España
+México
+Brasil
+Argentina
+Francia
+Italia
+
+---
+
+## Departamentos Colombia (mínimo 10)
+
+Valle del Cauca
+Antioquia
+Cundinamarca
+Atlántico
+Bolívar
+Santander
+Risaralda
+Magdalena
+Quindío
+Meta
+
+---
+
+## Ciudades (mínimo 20)
+
+Incluyendo:
+
+Cali
+Bogotá
+Medellín
+Cartagena
+Barranquilla
+Santa Marta
+Pereira
+Bucaramanga
+Armenia
+Villavicencio
+
+---
+
+## Clientes (mínimo 15)
+
+Clientes con ciudades variadas.
+
+---
+
+## Vuelos (20–30)
+
+Características:
+
+* vuelos nacionales Colombia
+* algunos internacionales
+* fechas durante 2026
+* horarios realistas
+* capacidad entre 120 y 220 pasajeros
+
+---
+
+## Reservas (15+)
+
+Ejemplos:
+
+* reserva individual
+* reserva familiar
+* reserva con paquetes turísticos
+
+---
+
+## Tiquetes (20+)
+
+Relacionados con reservas.
+
+---
+
+## Paquetes turísticos (10+)
+
+Ejemplos:
+
+Hotel Cartagena
+Tour Isla Barú
+Transporte aeropuerto-hotel
+Tour cultural Madrid
+Excursión Miami Beach
+
+---
+
+# 4 CONSULTAS DE PRUEBA
+
+Al final del script incluir SELECT para validar el sistema.
+
+Ejemplos:
+
+Clientes con su ciudad
+
+Reservas por cliente
+
+Vuelos por destino
+
+Reservas con paquetes turísticos
+
+Número de reservas por vuelo
+
+Historial de estados de una reserva
+
+---
+
+# FORMATO DE RESPUESTA
+
+El resultado debe ser:
+
+* un único script SQL
+* completamente ejecutable
+* con comentarios claros
+* sin explicaciones fuera del código
+* comenzar directamente con el SQL
