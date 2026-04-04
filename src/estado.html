@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estado del Vuelo – Terra Sky</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .status-page { min-height: 100vh; background: var(--col-gray-50); }
+
+    /* Hero */
+    .status-hero {
+      background: var(--col-primary);
+      padding: 2.5rem 0 5rem;
+      color: var(--col-white);
+      text-align: center;
+    }
+    .status-hero h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: .4rem; }
+    .status-hero p  { font-size: .9rem; opacity: .75; }
+
+    /* Lookup card */
+    .status-lookup {
+      max-width: 680px;
+      margin: -3rem auto 0;
+      padding: 0 1rem;
+      position: relative;
+      z-index: 2;
+    }
+    .status-card {
+      background: var(--col-white);
+      border-radius: var(--radius-xl);
+      padding: 1.75rem 2rem;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--col-gray-100);
+      margin-bottom: 1.5rem;
+    }
+    .status-card h2 { font-size: 1rem; font-weight: 700; color: var(--col-gray-900); margin-bottom: .25rem; }
+    .status-card > p { font-size: .8rem; color: var(--col-gray-500); margin-bottom: 1.25rem; }
+
+    /* Form */
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .85rem; align-items: end; }
+    @media (max-width: 560px) { .form-row-3 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 380px) { .form-row-3 { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: .3rem; }
+    .form-group label { font-size: .75rem; font-weight: 600; color: var(--col-gray-600); }
+    .form-input {
+      padding: .65rem .9rem;
+      border: 1.5px solid var(--col-gray-200);
+      border-radius: var(--radius-sm);
+      font-size: .875rem;
+      outline: none;
+      transition: border-color var(--transition);
+      font-family: inherit;
+      color: var(--col-gray-800);
+      background: var(--col-gray-50);
+    }
+    .form-input:focus { border-color: var(--col-primary); background: var(--col-white); }
+
+    .sf-error {
+      font-size: .8rem; color: #d4183d;
+      background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: var(--radius-sm); padding: .5rem .75rem;
+      margin-top: .5rem; display: none;
+    }
+    .sf-error.show { display: block; }
+
+    /* Quick routes */
+    .quick-routes { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .85rem; }
+    .route-pill {
+      background: var(--col-gray-100);
+      padding: .3rem .65rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--col-gray-700);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all var(--transition);
+    }
+    .route-pill:hover { border-color: var(--col-primary); color: var(--col-primary); background: rgba(11,61,145,.06); }
+
+    /* Results area */
+    .status-result { max-width: 860px; margin: 0 auto; padding: 0 1rem 4rem; }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .35rem .85rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 700;
+    }
+    .status-ontime    { background: rgba(34,197,94,.15);  color: #15803d; }
+    .status-delayed   { background: rgba(234,179,8,.15);  color: #92400e; }
+    .status-cancelled { background: rgba(239,68,68,.15);  color: #991b1b; }
+    .status-boarding  { background: rgba(14,116,144,.15); color: var(--col-cyan); }
+    .status-arrived   { background: rgba(11,61,145,.15);   color: var(--col-primary); }
+
+    /* Flight info card */
+    .flight-status-card {
+      background: var(--col-white);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--col-gray-100);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.25rem;
+    }
+    .fsc-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: .6rem;
+    }
+    .fsc-flight-no { font-size: 1rem; font-weight: 700; color: var(--col-gray-900); }
+    .fsc-date      { font-size: .78rem; color: var(--col-gray-500); margin-top: .1rem; }
+
+    /* Timeline */
+    .fsc-timeline {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .fsc-airport { min-width: 80px; }
+    .fsc-airport-code { font-size: 2rem; font-weight: 800; color: var(--col-gray-900); line-height: 1; }
+    .fsc-airport-city { font-size: .72rem; color: var(--col-gray-500); margin-top: .15rem; }
+    .fsc-airport-time {
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--col-gray-700);
+      margin-top: .2rem;
+    }
+    .fsc-airport-time.delayed { color: #ef4444; text-decoration: line-through; font-weight: 400; }
+    .fsc-airport-time-new { font-size: .9rem; font-weight: 700; color: #d97706; }
+
+    .fsc-mid { flex: 1; text-align: center; }
+    .fsc-progress-bar {
+      height: 6px;
+      background: var(--col-gray-100);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: .4rem 0;
+    }
+    .fsc-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(to right, var(--col-primary), var(--col-cyan));
+      transition: width 1s ease;
+    }
+    .fsc-duration  { font-size: .72rem; color: var(--col-gray-500); }
+    .fsc-plane-pos { font-size: .65rem; color: var(--col-gray-400); margin-top: .15rem; }
+
+    /* Details grid */
+    .fsc-details {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .85rem;
+      background: var(--col-gray-50);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      border: 1px solid var(--col-gray-100);
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 600px) { .fsc-details { grid-template-columns: repeat(2, 1fr); } }
+    .fsc-detail label { font-size: .65rem; text-transform: uppercase; letter-spacing: .08em; color: var(--col-gray-500); font-weight: 600; }
+    .fsc-detail span  { font-size: .9rem; font-weight: 700; color: var(--col-gray-800); display: block; margin-top: .15rem; }
+
+    /* Live updates log */
+    .updates-card {
+      background: var(--col-white);
+      border: 1px solid var(--col-gray-100);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .updates-card h4 {
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--col-gray-500);
+      margin-bottom: .9rem;
+    }
+    .update-item {
+      display: flex;
+      gap: .75rem;
+      margin-bottom: .75rem;
+      position: relative;
+      padding-left: 1.25rem;
+    }
+    .update-item:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 20px;
+      bottom: -6px;
+      width: 1px;
+      background: var(--col-gray-200);
+    }
+    .update-dot {
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--col-white);
+      border: 2px solid var(--col-gray-300);
+      flex-shrink: 0;
+    }
+    .update-dot.active { border-color: var(--col-primary); background: var(--col-primary); }
+    .update-time { font-size: .7rem; color: var(--col-gray-400); white-space: nowrap; margin-bottom: .05rem; }
+    .update-msg  { font-size: .82rem; color: var(--col-gray-700); }
+
+    /* Recent flights */
+    .recent-flights-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .85rem;
+      max-width: 860px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    @media (max-width: 700px) { .recent-flights-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 440px) { .recent-flights-grid { grid-template-columns: 1fr; } }
+
+    .recent-card {
+      background: var(--col-white);
+      border: 1px solid var(--col-gray-100);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      cursor: pointer;
+      transition: box-shadow var(--transition), border-color var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+    .recent-card:hover { box-shadow: var(--shadow); border-color: var(--col-primary); }
+    .recent-route      { font-size: .95rem; font-weight: 700; color: var(--col-gray-900); margin-bottom: .25rem; }
+    .recent-flight-no  { font-size: .72rem; color: var(--col-gray-500); margin-bottom: .5rem; }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.15)"/>
+          <path d="M8 22 L15 10 L18 15 L22 10 L28 22" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="18" cy="22" r="3" fill="white" opacity=".9"/>
+          <path d="M12 26 L24 26" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-brand">TERRA SKY</span>
+        <span class="logo-sub">AEROLÍNEA</span>
+      </div>
+    </a>
+    <nav class="header-nav">
+      <a href="index.html" class="nav-link">Inicio</a>
+      <a href="resultados.html" class="nav-link">Vuelos</a>
+      <a href="checkin.html" class="nav-link">Check-in</a>
+      <a href="gestionar.html" class="nav-link">Mi reserva</a>
+    </nav>
+    <div class="header-actions">
+      <a href="login.html" class="btn btn-outline-white btn-sm">Iniciar sesión</a>
+      <a href="login.html" class="btn btn-white btn-sm">Registrarse</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <nav class="mobile-nav" id="mobileNav" hidden>
+    <a href="index.html" class="mobile-nav-link">Inicio</a>
+    <a href="resultados.html" class="mobile-nav-link">Vuelos</a>
+    <a href="checkin.html" class="mobile-nav-link">Check-in</a>
+    <a href="gestionar.html" class="mobile-nav-link">Mi reserva</a>
+    <div class="mobile-nav-btns">
+      <a href="login.html" class="btn btn-outline-white btn-sm" style="flex:1;justify-content:center">Iniciar sesión</a>
+      <a href="login.html" class="btn btn-white btn-sm" style="flex:1;justify-content:center">Registrarse</a>
+    </div>
+  </nav>
+</header>
+
+<main class="status-page">
+
+  <!-- Hero -->
+  <div class="status-hero">
+    <div class="container">
+      <h1>Estado del Vuelo</h1>
+      <p>Consulta en tiempo real la información de tu vuelo Terra Sky</p>
+    </div>
+  </div>
+
+  <!-- Lookup -->
+  <div class="status-lookup">
+    <div class="status-card">
+      <h2>Buscar vuelo</h2>
+      <p>Ingresa el número de vuelo o selecciona una ruta</p>
+
+      <form id="statusForm" novalidate>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="sf-flight">N.° de vuelo</label>
+            <input id="sf-flight" class="form-input" type="text" placeholder="Ej: TS-152" style="text-transform:uppercase" />
+          </div>
+          <div class="form-group">
+            <label for="sf-date">Fecha</label>
+            <input id="sf-date" class="form-input" type="date" />
+          </div>
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary" style="width:100%;padding:.65rem;">Consultar</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="sfError" class="sf-error">No se encontró un vuelo con ese número. Intenta con: TS-152, TS-241 o TS-378.</div>
+
+      <div class="quick-routes">
+        <span style="font-size:.72rem;color:var(--col-gray-500);align-self:center">Vuelos rápidos:</span>
+        <button class="route-pill" onclick="quickSearch('TS-152')">TS-152 · BOG→MAD</button>
+        <button class="route-pill" onclick="quickSearch('TS-241')">TS-241 · MDE→BCN</button>
+        <button class="route-pill" onclick="quickSearch('TS-378')">TS-378 · CLO→JFK</button>
+        <button class="route-pill" onclick="quickSearch('TS-090')">TS-090 · BOG→MDE</button>
+        <button class="route-pill" onclick="quickSearch('TS-305')">TS-305 · CTG→BOG</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result (hidden initially) -->
+  <div class="status-result" id="statusResult" hidden>
+
+    <div class="flight-status-card">
+      <div class="fsc-header">
+        <div>
+          <div class="fsc-flight-no" id="sr-flightNo">TS-152 · Terra Sky</div>
+          <div class="fsc-date" id="sr-date">15 Mar 2026</div>
+        </div>
+        <div class="status-badge status-ontime" id="sr-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="sr-statusText">A tiempo</span>
+        </div>
+      </div>
+
+      <div class="fsc-timeline">
+        <div class="fsc-airport" style="text-align:left">
+          <div class="fsc-airport-code" id="sr-origin">BOG</div>
+          <div class="fsc-airport-city" id="sr-originCity">Bogotá</div>
+          <div class="fsc-airport-time" id="sr-dep">22:30</div>
+          <div class="fsc-airport-time-new" id="sr-newDep" style="display:none"></div>
+        </div>
+        <div class="fsc-mid">
+          <div class="fsc-duration" id="sr-duration">11h 45min</div>
+          <div class="fsc-progress-bar">
+            <div class="fsc-progress-fill" id="sr-progress" style="width:0%"></div>
+          </div>
+          <div class="fsc-plane-pos" id="sr-planePos">En tierra · En preparación</div>
+        </div>
+        <div class="fsc-airport" style="text-align:right">
+          <div class="fsc-airport-code" id="sr-dest">MAD</div>
+          <div class="fsc-airport-city" id="sr-destCity">Madrid</div>
+          <div class="fsc-airport-time" id="sr-arr">14:15</div>
+          <div class="fsc-airport-time-new" id="sr-newArr" style="display:none"></div>
+        </div>
+      </div>
+
+      <div class="fsc-details">
+        <div class="fsc-detail"><label>Terminal</label><span id="sr-terminal">T1</span></div>
+        <div class="fsc-detail"><label>Puerta</label><span id="sr-gate">B12</span></div>
+        <div class="fsc-detail"><label>Embarque</label><span id="sr-boarding">21:45</span></div>
+        <div class="fsc-detail"><label>Aeronave</label><span id="sr-aircraft">A330-200</span></div>
+      </div>
+
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <a href="checkin.html" class="btn btn-primary btn-sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Hacer check-in
+        </a>
+        <a href="gestionar.html" class="btn btn-cyan btn-sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Gestionar reserva
+        </a>
+      </div>
+    </div>
+
+    <!-- Updates -->
+    <div class="updates-card">
+      <h4>Actualizaciones del vuelo</h4>
+      <div id="sr-updates"></div>
+    </div>
+
+  </div><!-- /status-result -->
+
+  <!-- Recent flights -->
+  <div class="container" style="padding-bottom:4rem">
+    <div style="max-width:860px;margin:2rem auto 1rem">
+      <h2 style="font-size:1rem;font-weight:700;color:var(--col-gray-800)">Próximos vuelos hoy</h2>
+    </div>
+    <div class="recent-flights-grid">
+      <div class="recent-card" onclick="quickSearch('TS-152')">
+        <div class="recent-route">BOG → MAD</div>
+        <div class="recent-flight-no">TS-152 · 22:30</div>
+        <div class="status-badge status-ontime" style="font-size:.68rem;padding:.2rem .6rem">A tiempo</div>
+      </div>
+      <div class="recent-card" onclick="quickSearch('TS-241')">
+        <div class="recent-route">MDE → BCN</div>
+        <div class="recent-flight-no">TS-241 · 14:10</div>
+        <div class="status-badge status-boarding" style="font-size:.68rem;padding:.2rem .6rem">Embarcando</div>
+      </div>
+      <div class="recent-card" onclick="quickSearch('TS-378')">
+        <div class="recent-route">CLO → JFK</div>
+        <div class="recent-flight-no">TS-378 · 09:45</div>
+        <div class="status-badge status-delayed" style="font-size:.68rem;padding:.2rem .6rem">Demorado 25min</div>
+      </div>
+      <div class="recent-card" onclick="quickSearch('TS-090')">
+        <div class="recent-route">BOG → MDE</div>
+        <div class="recent-flight-no">TS-090 · 06:15</div>
+        <div class="status-badge status-arrived" style="font-size:.68rem;padding:.2rem .6rem">Aterrizó</div>
+      </div>
+      <div class="recent-card" onclick="quickSearch('TS-305')">
+        <div class="recent-route">CTG → BOG</div>
+        <div class="recent-flight-no">TS-305 · 11:30</div>
+        <div class="status-badge status-ontime" style="font-size:.68rem;padding:.2rem .6rem">A tiempo</div>
+      </div>
+      <div class="recent-card" onclick="quickSearch('TS-412')">
+        <div class="recent-route">BOG → MIA</div>
+        <div class="recent-flight-no">TS-412 · 15:55</div>
+        <div class="status-badge status-ontime" style="font-size:.68rem;padding:.2rem .6rem">A tiempo</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-logo">
+          <div class="footer-logo-icon">
+            <svg viewBox="0 0 36 36" fill="none">
+              <rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.1)"/>
+              <path d="M8 22 L15 10 L18 15 L22 10 L28 22" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle cx="18" cy="22" r="3" fill="white" opacity=".9"/>
+            </svg>
+          </div>
+          <div class="footer-logo-text">
+            <span class="footer-logo-brand">TERRA SKY</span>
+            <span class="footer-logo-sub">AEROLÍNEA</span>
+          </div>
+        </div>
+        <p class="footer-tagline">Conectamos Colombia con el mundo.</p>
+      </div>
+      <div class="footer-links"><h4>Vuelos</h4><ul>
+        <li><a href="resultados.html">Buscar vuelos</a></li>
+        <li><a href="checkin.html">Check-in online</a></li>
+        <li><a href="gestionar.html">Gestionar reserva</a></li>
+      </ul></div>
+      <div class="footer-links"><h4>Ayuda</h4><ul>
+        <li><a href="#">Preguntas frecuentes</a></li>
+        <li><a href="#">Políticas de equipaje</a></li>
+      </ul></div>
+      <div class="footer-links"><h4>Empresa</h4><ul>
+        <li><a href="#">Acerca de Terra Sky</a></li>
+        <li><a href="#">Destinos</a></li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">
+      <div class="footer-bottom-inner">
+        <span>© 2025 Terra Sky Aerolínea. Todos los derechos reservados.</span>
+        <div class="footer-bottom-links"><a href="#">Privacidad</a><a href="#">Términos</a></div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  const FLIGHTS = {
+    'TS-152':  { origin:'BOG', dest:'MAD', originCity:'Bogotá',    destCity:'Madrid',     dep:'22:30', arr:'14:15', duration:'11h 45min', status:'ontime',   statusText:'A tiempo',        progress:0,  terminal:'T1', gate:'B12', boarding:'21:45', aircraft:'A330-200', date:'15 Mar 2026', planePos:'En tierra · En preparación' },
+    'TS-241':  { origin:'MDE', dest:'BCN', originCity:'Medellín',  destCity:'Barcelona',  dep:'14:10', arr:'08:30', duration:'12h 20min', status:'boarding',  statusText:'Embarcando',      progress:5,  terminal:'T2', gate:'A05', boarding:'13:30', aircraft:'B787-9',   date:'22 Mar 2026', planePos:'Embarque en progreso' },
+    'TS-378':  { origin:'CLO', dest:'JFK', originCity:'Cali',      destCity:'Nueva York', dep:'09:45', arr:'19:20', duration:'9h 35min',  status:'delayed',   statusText:'Demorado 25min',  progress:0,  terminal:'T1', gate:'C21', boarding:'10:05', aircraft:'B737-MAX', date:'28 Mar 2026', planePos:'En tierra · Demorado por clima', newDep:'10:10', newArr:'19:45' },
+    'TS-090':  { origin:'BOG', dest:'MDE', originCity:'Bogotá',    destCity:'Medellín',   dep:'06:15', arr:'07:05', duration:'50min',     status:'arrived',   statusText:'Aterrizó',        progress:100, terminal:'T1', gate:'D03', boarding:'05:45', aircraft:'A320neo', date:'Hoy',         planePos:'Aterrizó a las 07:02' },
+    'TS-305':  { origin:'CTG', dest:'BOG', originCity:'Cartagena', destCity:'Bogotá',     dep:'11:30', arr:'12:20', duration:'50min',     status:'ontime',    statusText:'A tiempo',        progress:0,  terminal:'T1', gate:'E08', boarding:'11:00', aircraft:'A320neo', date:'Hoy',         planePos:'En tierra · Abordará pronto' },
+    'TS-412':  { origin:'BOG', dest:'MIA', originCity:'Bogotá',    destCity:'Miami',      dep:'15:55', arr:'20:45', duration:'4h 50min',  status:'ontime',    statusText:'A tiempo',        progress:0,  terminal:'T1', gate:'F14', boarding:'15:20', aircraft:'B737-MAX', date:'Hoy',        planePos:'En tierra · En preparación' },
+  };
+
+  const STATUS_CLASSES = {
+    ontime:    'status-ontime',
+    boarding:  'status-boarding',
+    delayed:   'status-delayed',
+    cancelled: 'status-cancelled',
+    arrived:   'status-arrived'
+  };
+
+  const ICONS = {
+    ontime:    '<polyline points="20 6 9 17 4 12"/>',
+    boarding:  '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+    delayed:   '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    cancelled: '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+    arrived:   '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>'
+  };
+
+  const UPDATES = {
+    ontime:   [
+      { time: 'Ayer 23:00', msg: 'Vuelo programado y confirmado.', active: false },
+      { time: 'Hoy 04:00',  msg: 'Aeronave posicionada en puerta.', active: false },
+      { time: 'Hoy 18:30',  msg: 'Verificación técnica completada.', active: true }
+    ],
+    boarding: [
+      { time: 'Hoy 12:00',  msg: 'Vuelo confirmado.', active: false },
+      { time: 'Hoy 13:00',  msg: 'Sala de embarque abierta.', active: false },
+      { time: 'Hoy 13:30',  msg: 'Embarque iniciado. Diríjase a puerta A05.', active: true }
+    ],
+    delayed:  [
+      { time: 'Ayer 22:00', msg: 'Vuelo programado.', active: false },
+      { time: 'Hoy 08:00',  msg: 'Condiciones meteorológicas adversas en ruta.', active: false },
+      { time: 'Hoy 09:30',  msg: 'Demora de 25 minutos. Nueva salida: 10:10.', active: true }
+    ],
+    arrived:  [
+      { time: 'Hoy 05:00',  msg: 'Embarque completado.', active: false },
+      { time: 'Hoy 06:18',  msg: 'Despegue.', active: false },
+      { time: 'Hoy 07:02',  msg: 'Aterrizaje exitoso en Medellín.', active: true }
+    ],
+    cancelled:[
+      { time: 'Hoy 06:00', msg: 'Vuelo cancelado por condiciones técnicas.', active: true }
+    ]
+  };
+
+  function searchFlight(flightNo) {
+    const key = flightNo.trim().toUpperCase();
+    const f   = FLIGHTS[key];
+    const errEl = document.getElementById('sfError');
+
+    if (!f) {
+      errEl.classList.add('show');
+      document.getElementById('statusResult').hidden = true;
+      return;
+    }
+    errEl.classList.remove('show');
+    renderFlight(key, f);
+  }
+
+  function renderFlight(no, f) {
+    document.getElementById('sr-flightNo').textContent  = no + ' · Terra Sky';
+    document.getElementById('sr-date').textContent      = f.date;
+    document.getElementById('sr-origin').textContent    = f.origin;
+    document.getElementById('sr-originCity').textContent = f.originCity;
+    document.getElementById('sr-dest').textContent      = f.dest;
+    document.getElementById('sr-destCity').textContent  = f.destCity;
+    document.getElementById('sr-dep').textContent       = f.dep;
+    document.getElementById('sr-arr').textContent       = f.arr;
+    document.getElementById('sr-duration').textContent  = f.duration;
+    document.getElementById('sr-planePos').textContent  = f.planePos;
+    document.getElementById('sr-terminal').textContent  = f.terminal;
+    document.getElementById('sr-gate').textContent      = f.gate;
+    document.getElementById('sr-boarding').textContent  = f.boarding;
+    document.getElementById('sr-aircraft').textContent  = f.aircraft;
+
+    // Progress bar (animate to value)
+    const progressEl = document.getElementById('sr-progress');
+    progressEl.style.width = '0%';
+    setTimeout(() => { progressEl.style.width = f.progress + '%'; }, 100);
+
+    // Status badge
+    const badge = document.getElementById('sr-badge');
+    badge.className = 'status-badge ' + (STATUS_CLASSES[f.status] || 'status-ontime');
+    badge.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${ICONS[f.status] || ICONS.ontime}</svg><span>${f.statusText}</span>`;
+
+    // Delayed times
+    const newDepEl = document.getElementById('sr-newDep');
+    const newArrEl = document.getElementById('sr-newArr');
+    if (f.status === 'delayed' && f.newDep) {
+      document.getElementById('sr-dep').classList.add('delayed');
+      newDepEl.textContent = f.newDep;
+      newDepEl.style.display = 'block';
+    } else {
+      document.getElementById('sr-dep').classList.remove('delayed');
+      newDepEl.style.display = 'none';
+    }
+    if (f.status === 'delayed' && f.newArr) {
+      document.getElementById('sr-arr').classList.add('delayed');
+      newArrEl.textContent = f.newArr;
+      newArrEl.style.display = 'block';
+    } else {
+      document.getElementById('sr-arr').classList.remove('delayed');
+      newArrEl.style.display = 'none';
+    }
+
+    // Updates log
+    const updatesEl = document.getElementById('sr-updates');
+    const updates   = UPDATES[f.status] || UPDATES.ontime;
+    updatesEl.innerHTML = updates.map(u => `
+      <div class="update-item">
+        <div class="update-dot ${u.active ? 'active' : ''}"></div>
+        <div>
+          <div class="update-time">${u.time}</div>
+          <div class="update-msg">${u.msg}</div>
+        </div>
+      </div>`).join('');
+
+    document.getElementById('statusResult').hidden = false;
+    document.getElementById('statusResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Form submit ──
+  document.getElementById('statusForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    searchFlight(document.getElementById('sf-flight').value);
+  });
+
+  // ── Quick search ──
+  window.quickSearch = function (no) {
+    document.getElementById('sf-flight').value = no;
+    searchFlight(no);
+  };
+
+  // ── Set today's date as default ──
+  const dateInput = document.getElementById('sf-date');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+  // ── Hamburger ──
+  const ham = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  if (ham) {
+    ham.addEventListener('click', () => {
+      const open = ham.classList.toggle('open');
+      ham.setAttribute('aria-expanded', open);
+      mobileNav.hidden = !open;
+    });
+  }
+
+  // ── Auto-search from URL ──
+  const p = new URLSearchParams(location.search);
+  if (p.get('vuelo')) searchFlight(p.get('vuelo'));
+})();
+</script>
+<script src="js/brand.js"></script>
+</body>
+</html>

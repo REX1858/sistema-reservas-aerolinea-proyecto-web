@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestionar Reserva – Terra Sky</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .manage-page { min-height: 100vh; background: var(--col-gray-50); }
+
+    /* Hero */
+    .manage-hero {
+      background: var(--col-primary);
+      padding: 2.5rem 0;
+      color: var(--col-white);
+      text-align: center;
+    }
+    .manage-hero h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: .4rem; }
+    .manage-hero p  { font-size: .9rem; opacity: .75; }
+
+    /* Lookup card */
+    .lookup-card {
+      background: var(--col-white);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      box-shadow: var(--shadow-xl);
+      max-width: 560px;
+      margin: -2rem auto 2rem;
+      position: relative;
+      z-index: 2;
+      border: 1px solid var(--col-gray-100);
+    }
+    .lookup-card h2 { font-size: 1.1rem; font-weight: 700; color: var(--col-gray-900); margin-bottom: .3rem; }
+    .lookup-card p  { font-size: .8rem; color: var(--col-gray-500); margin-bottom: 1.5rem; }
+    .lookup-form { display: flex; flex-direction: column; gap: .85rem; }
+    .form-group { display: flex; flex-direction: column; gap: .3rem; }
+    .form-group label { font-size: .75rem; font-weight: 600; color: var(--col-gray-600); }
+    .form-input {
+      padding: .65rem .9rem;
+      border: 1.5px solid var(--col-gray-200);
+      border-radius: var(--radius-sm);
+      font-size: .875rem;
+      outline: none;
+      transition: border-color var(--transition);
+      font-family: inherit;
+      color: var(--col-gray-800);
+      background: var(--col-gray-50);
+    }
+    .form-input:focus { border-color: var(--col-primary); background: var(--col-white); }
+    .form-input.error { border-color: #d4183d; }
+    .lookup-error   { font-size: .8rem; color: #d4183d; background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-sm); padding: .5rem .75rem; display: none; }
+    .lookup-error.show { display: block; }
+
+    /* Quick demo */
+    .lookup-demo {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--col-gray-100);
+      font-size: .75rem;
+      color: var(--col-gray-500);
+    }
+    .demo-pills { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .4rem; }
+    .demo-pill  {
+      background: var(--col-gray-100);
+      padding: .3rem .65rem;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--col-primary);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all var(--transition);
+    }
+    .demo-pill:hover { border-color: var(--col-primary); background: rgba(11,61,145,.06); }
+
+    /* Result section */
+    .manage-result { max-width: 860px; margin: 0 auto; padding-bottom: 4rem; }
+
+    /* Booking header card */
+    .booking-header-card {
+      background: var(--col-primary);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem 1.75rem;
+      color: var(--col-white);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .bh-code { font-size: 1.5rem; font-weight: 800; letter-spacing: .08em; margin-bottom: .2rem; }
+    .bh-passenger { font-size: 1rem; font-weight: 600; margin-bottom: .2rem; }
+    .bh-status {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      background: rgba(255,255,255,.2);
+      padding: .25rem .75rem;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 600;
+    }
+    .bh-actions { display: flex; flex-direction: column; gap: .5rem; align-items: flex-end; }
+    @media (max-width: 600px) { .bh-actions { flex-direction: row; flex-wrap: wrap; } }
+
+    /* Info grid */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+    @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+
+    .info-card {
+      background: var(--col-white);
+      border: 1px solid var(--col-gray-100);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .info-card h4 {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--col-gray-500);
+      margin-bottom: .9rem;
+    }
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .85rem;
+      color: var(--col-gray-700);
+      margin-bottom: .5rem;
+    }
+    .info-row:last-child { margin-bottom: 0; }
+    .info-row svg { color: var(--col-primary); flex-shrink: 0; }
+    .info-row strong { color: var(--col-gray-900); }
+
+    /* Flight timeline */
+    .flight-timeline-card {
+      background: var(--col-white);
+      border: 1px solid var(--col-gray-100);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.25rem;
+    }
+    .ftl-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: .5rem; }
+    .ftl-head h4 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--col-gray-500); }
+    .ftl-route {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .ftl-airport { text-align: center; }
+    .ftl-code { font-size: 2rem; font-weight: 800; color: var(--col-gray-900); line-height: 1; }
+    .ftl-time { font-size: 1rem; font-weight: 600; color: var(--col-gray-700); }
+    .ftl-city { font-size: .75rem; color: var(--col-gray-400); margin-top: .2rem; }
+    .ftl-mid { text-align: center; flex: 1; }
+    .ftl-line { height: 2px; background: linear-gradient(to right, var(--col-primary), var(--col-cyan)); border-radius: 2px; margin: .4rem 0; position: relative; }
+    .ftl-plane {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--col-white);
+      padding: 0 .4rem;
+      color: var(--col-primary);
+    }
+    .ftl-duration { font-size: .72rem; color: var(--col-gray-500); }
+    .ftl-stops    { font-size: .7rem; color: var(--col-gray-400); margin-top: .2rem; }
+
+    /* Actions bar */
+    .actions-bar {
+      background: var(--col-white);
+      border: 1px solid var(--col-gray-100);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      flex: 1;
+      min-width: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .4rem;
+      padding: .85rem;
+      border: 1.5px solid var(--col-gray-200);
+      border-radius: var(--radius-lg);
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--col-gray-700);
+      cursor: pointer;
+      transition: all var(--transition);
+      text-align: center;
+    }
+    .action-btn svg { color: var(--col-primary); }
+    .action-btn:hover { border-color: var(--col-primary); color: var(--col-primary); background: rgba(11,61,145,.05); }
+    .action-btn.danger:hover { border-color: #d4183d; color: #d4183d; background: #fef2f2; }
+    .action-btn.danger svg { color: #d4183d; }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.15)"/>
+          <path d="M8 22 L15 10 L18 15 L22 10 L28 22" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="18" cy="22" r="3" fill="white" opacity=".9"/>
+          <path d="M12 26 L24 26" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-brand">TERRA SKY</span>
+        <span class="logo-sub">AEROLÍNEA</span>
+      </div>
+    </a>
+    <nav class="header-nav">
+      <a href="index.html" class="nav-link">Inicio</a>
+      <a href="resultados.html" class="nav-link">Vuelos</a>
+      <a href="estado.html" class="nav-link">Estado del vuelo</a>
+      <a href="checkin.html" class="nav-link">Check-in</a>
+    </nav>
+    <div class="header-actions">
+      <a href="login.html" class="btn btn-outline-white btn-sm">Iniciar sesión</a>
+      <a href="login.html" class="btn btn-white btn-sm">Registrarse</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <nav class="mobile-nav" id="mobileNav" hidden>
+    <a href="index.html" class="mobile-nav-link">Inicio</a>
+    <a href="resultados.html" class="mobile-nav-link">Vuelos</a>
+    <a href="estado.html" class="mobile-nav-link">Estado del vuelo</a>
+    <a href="checkin.html" class="mobile-nav-link">Check-in</a>
+    <div class="mobile-nav-btns">
+      <a href="login.html" class="btn btn-outline-white btn-sm" style="flex:1;justify-content:center">Iniciar sesión</a>
+      <a href="login.html" class="btn btn-white btn-sm" style="flex:1;justify-content:center">Registrarse</a>
+    </div>
+  </nav>
+</header>
+
+<main class="manage-page">
+
+  <!-- Hero -->
+  <div class="manage-hero">
+    <div class="container">
+      <h1>Gestionar mi reserva</h1>
+      <p>Consulta, modifica o cancela tu reserva de vuelo</p>
+    </div>
+  </div>
+
+  <!-- Lookup card -->
+  <div class="container">
+    <div class="lookup-card">
+      <h2>Buscar reserva</h2>
+      <p>Ingresa el código de reserva y el apellido del pasajero principal</p>
+
+      <form class="lookup-form" id="lookupForm" novalidate>
+        <div class="form-group">
+          <label for="bookingCode">Código de reserva *</label>
+          <input id="bookingCode" class="form-input" type="text" placeholder="Ej: TS-ABC123" style="text-transform:uppercase" />
+        </div>
+        <div class="form-group">
+          <label for="lastName">Apellido del pasajero *</label>
+          <input id="lastName" class="form-input" type="text" placeholder="Ej: Ramírez" />
+        </div>
+        <div id="lookupError" class="lookup-error">No se encontró ninguna reserva con esos datos. Verifica e intenta nuevamente.</div>
+        <button type="submit" class="btn btn-primary" style="width:100%;padding:.75rem;font-size:.95rem;">Buscar reserva</button>
+      </form>
+
+      <div class="lookup-demo">
+        <span>Datos de prueba:</span>
+        <div class="demo-pills">
+          <button class="demo-pill" onclick="fillDemo('TS-BOG001','Ramírez')">TS-BOG001 / Ramírez</button>
+          <button class="demo-pill" onclick="fillDemo('TS-MDE002','Gómez')">TS-MDE002 / Gómez</button>
+          <button class="demo-pill" onclick="fillDemo('TS-CLO003','Martínez')">TS-CLO003 / Martínez</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result (hidden until search) -->
+    <div class="manage-result" id="manageResult" hidden>
+
+      <!-- Booking header -->
+      <div class="booking-header-card">
+        <div>
+          <div class="bh-code" id="res-code">TS-BOG001</div>
+          <div class="bh-passenger" id="res-passenger">Carlos Andrés Ramírez López</div>
+          <div class="bh-status">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Confirmada
+          </div>
+        </div>
+        <div class="bh-actions">
+          <a href="checkin.html" class="btn btn-white btn-sm">Hacer check-in</a>
+          <button class="btn btn-outline-white btn-sm" onclick="printPage()">Imprimir tiquete</button>
+        </div>
+      </div>
+
+      <!-- Flight timeline -->
+      <div class="flight-timeline-card">
+        <div class="ftl-head">
+          <h4>Detalles del vuelo</h4>
+          <span id="res-date" style="font-size:.8rem;color:var(--col-gray-500)">15 Mar 2026</span>
+        </div>
+        <div class="ftl-route">
+          <div class="ftl-airport">
+            <div class="ftl-code" id="res-origin">BOG</div>
+            <div class="ftl-time" id="res-dep">22:30</div>
+            <div class="ftl-city" id="res-originCity">Bogotá</div>
+          </div>
+          <div class="ftl-mid">
+            <div class="ftl-duration" id="res-duration">11h 45min</div>
+            <div class="ftl-line">
+              <span class="ftl-plane">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+              </span>
+            </div>
+            <div class="ftl-stops" id="res-stops">Directo · TS-152</div>
+          </div>
+          <div class="ftl-airport" style="text-align:right">
+            <div class="ftl-code" id="res-dest">MAD</div>
+            <div class="ftl-time" id="res-arr">14:15</div>
+            <div class="ftl-city" id="res-destCity">Madrid</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info grid -->
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>Pasajeros y asientos</h4>
+          <div id="seatsList">
+            <div class="info-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Carlos Ramírez — Asiento <strong>14A</strong></span>
+            </div>
+          </div>
+        </div>
+        <div class="info-card">
+          <h4>Información del vuelo</h4>
+          <div class="info-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <span>Clase <strong id="res-cabin">Económica</strong></span>
+          </div>
+          <div class="info-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Equipaje <strong>23kg incluido</strong></span>
+          </div>
+          <div class="info-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <span>Total pagado: <strong id="res-total" style="color:var(--col-primary)">COP 1.002.000</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions-bar">
+        <a href="checkin.html" class="action-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Check-in online
+        </a>
+        <button class="action-btn" onclick="printPage()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Imprimir tiquete
+        </button>
+        <button class="action-btn" onclick="alert('Función de cambio de asiento disponible próximamente.')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Cambiar asiento
+        </button>
+        <button class="action-btn danger" onclick="confirmCancel()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Cancelar reserva
+        </button>
+      </div>
+
+    </div><!-- /manage-result -->
+  </div><!-- /container -->
+
+</main>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-logo">
+          <div class="footer-logo-icon">
+            <svg viewBox="0 0 36 36" fill="none">
+              <rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.1)"/>
+              <path d="M8 22 L15 10 L18 15 L22 10 L28 22" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle cx="18" cy="22" r="3" fill="white" opacity=".9"/>
+            </svg>
+          </div>
+          <div class="footer-logo-text">
+            <span class="footer-logo-brand">TERRA SKY</span>
+            <span class="footer-logo-sub">AEROLÍNEA</span>
+          </div>
+        </div>
+        <p class="footer-tagline">Conectamos Colombia con el mundo.</p>
+      </div>
+      <div class="footer-links"><h4>Vuelos</h4><ul>
+        <li><a href="resultados.html">Buscar vuelos</a></li>
+        <li><a href="checkin.html">Check-in online</a></li>
+        <li><a href="estado.html">Estado del vuelo</a></li>
+      </ul></div>
+      <div class="footer-links"><h4>Ayuda</h4><ul>
+        <li><a href="#">Preguntas frecuentes</a></li>
+        <li><a href="#">Políticas de equipaje</a></li>
+      </ul></div>
+      <div class="footer-links"><h4>Empresa</h4><ul>
+        <li><a href="#">Acerca de Terra Sky</a></li>
+        <li><a href="#">Destinos</a></li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">
+      <div class="footer-bottom-inner">
+        <span>© 2025 Terra Sky Aerolínea. Todos los derechos reservados.</span>
+        <div class="footer-bottom-links"><a href="#">Privacidad</a><a href="#">Términos</a></div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Mock data ──
+  const BOOKINGS = [
+    {
+      code: 'TS-BOG001', lastName: 'ramírez',
+      passenger: 'Carlos Andrés Ramírez López',
+      origin: 'BOG', dest: 'MAD', originCity: 'Bogotá', destCity: 'Madrid',
+      dep: '22:30', arr: '14:15', date: '15 Mar 2026', duration: '11h 45min',
+      flight: 'TS-152', stops: 'Directo', cabin: 'Económica', seat: '14A',
+      total: '1.002.000'
+    },
+    {
+      code: 'TS-MDE002', lastName: 'gómez',
+      passenger: 'María Isabel Gómez Vargas',
+      origin: 'MDE', dest: 'BCN', originCity: 'Medellín', destCity: 'Barcelona',
+      dep: '14:10', arr: '08:30', date: '22 Mar 2026', duration: '12h 20min',
+      flight: 'TS-241', stops: 'Directo', cabin: 'Ejecutiva', seat: '2C',
+      total: '3.450.000'
+    },
+    {
+      code: 'TS-CLO003', lastName: 'martínez',
+      passenger: 'Andrés Felipe Martínez Ortiz',
+      origin: 'CLO', dest: 'JFK', originCity: 'Cali', destCity: 'Nueva York',
+      dep: '09:45', arr: '19:20', date: '28 Mar 2026', duration: '9h 35min',
+      flight: 'TS-378', stops: 'Directo', cabin: 'Económica', seat: '28B',
+      total: '1.520.000'
+    }
+  ];
+
+  // ── Lookup form ──
+  document.getElementById('lookupForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const code  = document.getElementById('bookingCode').value.trim().toUpperCase();
+    const lname = document.getElementById('lastName').value.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const booking = BOOKINGS.find(b =>
+      b.code === code &&
+      b.lastName.normalize('NFD').replace(/[\u0300-\u036f]/g, '') === lname
+    );
+
+    const errEl = document.getElementById('lookupError');
+    if (!booking) {
+      errEl.classList.add('show');
+      document.getElementById('manageResult').hidden = true;
+      return;
+    }
+    errEl.classList.remove('show');
+    renderBooking(booking);
+  });
+
+  function renderBooking(b) {
+    document.getElementById('res-code').textContent      = b.code;
+    document.getElementById('res-passenger').textContent = b.passenger;
+    document.getElementById('res-date').textContent      = b.date;
+    document.getElementById('res-origin').textContent    = b.origin;
+    document.getElementById('res-dest').textContent      = b.dest;
+    document.getElementById('res-originCity').textContent = b.originCity;
+    document.getElementById('res-destCity').textContent   = b.destCity;
+    document.getElementById('res-dep').textContent        = b.dep;
+    document.getElementById('res-arr').textContent        = b.arr;
+    document.getElementById('res-duration').textContent   = b.duration;
+    document.getElementById('res-stops').textContent      = b.stops + ' · ' + b.flight;
+    document.getElementById('res-cabin').textContent      = b.cabin;
+    document.getElementById('res-total').textContent      = 'COP ' + b.total;
+
+    const seatsList = document.getElementById('seatsList');
+    const name = b.passenger.split(' ').slice(0,2).join(' ');
+    seatsList.innerHTML = `
+      <div class="info-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>${name} — Asiento <strong>${b.seat}</strong></span>
+      </div>`;
+
+    document.getElementById('manageResult').hidden = false;
+    document.getElementById('manageResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Demo fill ──
+  window.fillDemo = function (code, lname) {
+    document.getElementById('bookingCode').value = code;
+    document.getElementById('lastName').value    = lname;
+  };
+
+  // ── Cancel ──
+  window.confirmCancel = function () {
+    if (confirm('¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.')) {
+      alert('Reserva cancelada. Se procesará el reembolso según las políticas vigentes.');
+      document.getElementById('manageResult').hidden = true;
+    }
+  };
+
+  // ── Print ──
+  window.printPage = function () { window.print(); };
+
+  // ── Hamburger ──
+  const ham = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  if (ham) {
+    ham.addEventListener('click', () => {
+      const open = ham.classList.toggle('open');
+      ham.setAttribute('aria-expanded', open);
+      mobileNav.hidden = !open;
+    });
+  }
+
+  // Auto-fill from URL
+  const p = new URLSearchParams(location.search);
+  if (p.get('code') && p.get('apellido')) {
+    document.getElementById('bookingCode').value = p.get('code');
+    document.getElementById('lastName').value    = p.get('apellido');
+    document.getElementById('lookupForm').dispatchEvent(new Event('submit'));
+  }
+})();
+</script>
+<script src="js/brand.js"></script>
+</body>
+</html>

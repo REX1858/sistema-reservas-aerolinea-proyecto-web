@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Completar Reserva – Terra Sky</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── Booking-specific ── */
+    .booking-page { min-height: 100vh; background: var(--col-gray-50); }
+
+    /* Hero bar */
+    .booking-hero {
+      background: var(--col-primary);
+      padding: 1.25rem 0;
+      color: var(--col-white);
+    }
+    .booking-hero-back {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      color: rgba(255,255,255,.75);
+      font-size: .8rem;
+      margin-bottom: .5rem;
+      transition: color var(--transition);
+    }
+    .booking-hero-back:hover { color: var(--col-white); }
+    .booking-hero h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: .2rem; }
+    .booking-hero p  { font-size: .85rem; opacity: .7; }
+
+    /* Step indicator */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      margin-bottom: 2rem;
+      gap: 0;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+    }
+    .step-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: var(--col-gray-200);
+      z-index: 0;
+    }
+    .step-item.done:not(:last-child)::after  { background: #22c55e; }
+    .step-circle {
+      position: relative;
+      z-index: 1;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--col-gray-200);
+      color: var(--col-gray-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      font-weight: 700;
+    }
+    .step-item.active .step-circle {
+      background: var(--col-primary);
+      color: var(--col-white);
+      box-shadow: 0 0 0 4px rgba(27,67,50,.15);
+    }
+    .step-item.done .step-circle {
+      background: #22c55e;
+      color: var(--col-white);
+    }
+    .step-label {
+      font-size: .7rem;
+      margin-top: .35rem;
+      color: var(--col-gray-400);
+      display: none;
+    }
+    .step-item.active .step-label { color: var(--col-primary); font-weight: 600; }
+    @media (min-width: 480px) { .step-label { display: block; } }
+
+    /* Layout grid */
+    .booking-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 1.5rem;
+      padding-block: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .booking-grid { grid-template-columns: 1fr; }
+      .booking-sidebar { order: -1; }
+    }
+
+    /* Cards */
+    .booking-card {
+      background: var(--col-white);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--col-gray-100);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1rem;
+    }
+    .booking-card-head {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin-bottom: 1.25rem;
+    }
+    .booking-card-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .icon-blue  { background: rgba(14,116,144,.1); color: var(--col-cyan); }
+    .icon-green { background: rgba(11,61,145,.1); color: var(--col-primary); }
+    .icon-gold  { background: rgba(234,179,8,.1); color: #ca8a04; }
+    .booking-card-head h3 { font-size: 1rem; font-weight: 700; color: var(--col-gray-900); }
+    .booking-card-head p  { font-size: .75rem; color: var(--col-gray-500); }
+
+    /* Passenger rows */
+    .pass-row-big {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .65rem 0;
+      border-bottom: 1px solid var(--col-gray-100);
+    }
+    .pass-row-big:last-child { border-bottom: none; }
+    .pass-row-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius);
+      background: var(--col-gray-50);
+      display: flex; align-items: center; justify-content: center;
+      margin-right: .75rem;
+    }
+    .pass-row-info { display: flex; align-items: center; flex: 1; }
+    .pass-type-name { font-size: .875rem; font-weight: 600; color: var(--col-gray-800); }
+    .pass-type-age  { font-size: .72rem; color: var(--col-gray-500); }
+
+    /* Form grid */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
+    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: .3rem; }
+    .form-group label { font-size: .75rem; font-weight: 600; color: var(--col-gray-600); }
+    .form-input {
+      padding: .6rem .85rem;
+      border: 1.5px solid var(--col-gray-200);
+      border-radius: var(--radius-sm);
+      font-size: .875rem;
+      outline: none;
+      transition: border-color var(--transition);
+      font-family: inherit;
+      color: var(--col-gray-800);
+      background: var(--col-gray-50);
+    }
+    .form-input:focus { border-color: var(--col-primary); background: var(--col-white); }
+    .form-input.error { border-color: #d4183d; }
+
+    /* Seat map */
+    .seat-map-wrap { overflow-x: auto; padding-bottom: .5rem; }
+    .seat-map { min-width: 300px; }
+    .seat-header-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: .5rem;
+      padding-left: 30px;
+    }
+    .seat-col-lbl {
+      width: 36px;
+      text-align: center;
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--col-gray-400);
+    }
+    .seat-aisle { width: 12px; }
+    .seat-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .seat-row-num {
+      width: 26px;
+      text-align: right;
+      font-size: .7rem;
+      color: var(--col-gray-400);
+      padding-right: 4px;
+    }
+    .seat-btn {
+      width: 36px;
+      height: 32px;
+      border-radius: 6px;
+      font-size: .65rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid;
+      transition: all .15s ease;
+      font-family: inherit;
+    }
+    .seat-available { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; }
+    .seat-available:hover { background: #dbeafe; }
+    .seat-business  { background: #fefce8; border-color: #fde047; color: #92400e; }
+    .seat-selected  { background: var(--col-primary); border-color: var(--col-primary); color: var(--col-white); transform: scale(1.08); }
+    .seat-occupied  { background: var(--col-gray-100); border-color: var(--col-gray-200); color: var(--col-gray-400); cursor: not-allowed; }
+    .seat-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: 1rem;
+    }
+    .seat-legend-item {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .72rem;
+      color: var(--col-gray-500);
+    }
+    .legend-swatch { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid; }
+
+    /* Payment */
+    .payment-security {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .75rem;
+      color: var(--col-gray-500);
+      margin-top: .75rem;
+    }
+    .payment-logos { display: flex; gap: .5rem; margin-top: .5rem; }
+    .pay-logo {
+      background: var(--col-gray-100);
+      border-radius: var(--radius-sm);
+      padding: .25rem .6rem;
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--col-gray-600);
+    }
+
+    /* Confirmation */
+    .confirm-circle {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(34,197,94,.1);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+    }
+
+    /* Sidebar */
+    .booking-sidebar { position: sticky; top: calc(var(--header-h) + 1rem); }
+    .sidebar-flight {
+      background: var(--col-white);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--col-gray-100);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1rem;
+    }
+    .sidebar-flight h4 {
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--col-gray-500);
+      margin-bottom: .85rem;
+    }
+    .sflight-route {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-bottom: .75rem;
+    }
+    .sflight-code { font-size: 1.1rem; font-weight: 800; color: var(--col-gray-900); }
+    .sflight-time { font-size: .8rem; color: var(--col-gray-500); }
+    .sflight-line { flex: 1; height: 1px; background: var(--col-gray-200); }
+    .sflight-detail {
+      font-size: .78rem;
+      color: var(--col-gray-500);
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      margin-bottom: .35rem;
+    }
+    .sflight-divider { border: none; border-top: 1px solid var(--col-gray-100); margin: .85rem 0; }
+    .sflight-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: .8rem;
+      color: var(--col-gray-600);
+      margin-bottom: .3rem;
+    }
+    .sflight-price-row.total {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--col-gray-900);
+      margin-top: .5rem;
+    }
+    .sflight-price-row.total span:last-child { color: var(--col-primary); }
+
+    /* Nav buttons */
+    .booking-nav {
+      display: flex;
+      gap: .75rem;
+      margin-top: 1rem;
+    }
+    .booking-nav .btn { min-width: 120px; }
+
+    /* Infants notice */
+    .infants-notice {
+      background: #fdf2f8;
+      border: 1px solid #fbcfe8;
+      border-radius: var(--radius);
+      padding: .75rem 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      margin-top: .75rem;
+    }
+    .infants-notice p { font-size: .78rem; color: #be185d; }
+    .infants-notice p strong { display: block; margin-bottom: .2rem; }
+
+    /* Steps hidden */
+    .step-pane { display: none; }
+    .step-pane.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.15)"/>
+          <path d="M8 22 L15 10 L18 15 L22 10 L28 22" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="18" cy="22" r="3" fill="white" opacity=".9"/>
+          <path d="M12 26 L24 26" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-brand">TERRA SKY</span>
+        <span class="logo-sub">AEROLÍNEA</span>
+      </div>
+    </a>
+    <nav class="header-nav">
+      <a href="index.html" class="nav-link">Inicio</a>
+      <a href="resultados.html" class="nav-link">Vuelos</a>
+      <a href="estado.html" class="nav-link">Estado del vuelo</a>
+      <a href="checkin.html" class="nav-link">Check-in</a>
+    </nav>
+    <div class="header-actions">
+      <a href="login.html" class="btn btn-outline-white btn-sm">Iniciar sesión</a>
+      <a href="login.html" class="btn btn-white btn-sm">Registrarse</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <nav class="mobile-nav" id="mobileNav" hidden>
+    <a href="index.html" class="mobile-nav-link">Inicio</a>
+    <a href="resultados.html" class="mobile-nav-link">Vuelos</a>
+    <a href="estado.html" class="mobile-nav-link">Estado del vuelo</a>
+    <a href="checkin.html" class="mobile-nav-link">Check-in</a>
+    <div class="mobile-nav-btns">
+      <a href="login.html" class="btn btn-outline-white btn-sm" style="flex:1; justify-content:center;">Iniciar sesión</a>
+      <a href="login.html" class="btn btn-white btn-sm" style="flex:1; justify-content:center;">Registrarse</a>
+    </div>
+  </nav>
+</header>
+
+<!-- ── BOOKING PAGE ── -->
+<main class="booking-page">
+
+  <!-- Hero bar -->
+  <div class="booking-hero">
+    <div class="container">
+      <a href="resultados.html" class="booking-hero-back" id="heroBack">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span id="heroBackLabel">Volver a resultados</span>
+      </a>
+      <h1>Completar reserva</h1>
+      <p id="flightSummaryBar">Bogotá (BOG) → Madrid (MAD) · 15 Mar 2026 · Clase Económica</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="booking-grid">
+
+      <!-- ── MAIN ── -->
+      <div class="booking-main">
+
+        <!-- Step indicator -->
+        <div class="step-indicator" id="stepIndicator">
+          <div class="step-item active" data-step="0">
+            <div class="step-circle">1</div>
+            <span class="step-label">Pasajeros</span>
+          </div>
+          <div class="step-item" data-step="1">
+            <div class="step-circle">2</div>
+            <span class="step-label">Asientos</span>
+          </div>
+          <div class="step-item" data-step="2">
+            <div class="step-circle">3</div>
+            <span class="step-label">Pago</span>
+          </div>
+          <div class="step-item" data-step="3">
+            <div class="step-circle">4</div>
+            <span class="step-label">Confirmación</span>
+          </div>
+        </div>
+
+        <!-- ═══ STEP 0 – Pasajeros ═══ -->
+        <div class="step-pane active" id="pane0">
+
+          <!-- Selección de pasajeros -->
+          <div class="booking-card">
+            <div class="booking-card-head">
+              <div class="booking-card-icon icon-blue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <h3>Seleccionar pasajeros</h3>
+                <p>Indica el número de pasajeros para el vuelo</p>
+              </div>
+            </div>
+
+            <div id="passengerRows">
+              <!-- Adultos -->
+              <div class="pass-row-big">
+                <div class="pass-row-info">
+                  <div class="pass-row-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B3D91" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <div>
+                    <div class="pass-type-name">Adultos</div>
+                    <div class="pass-type-age">15+ años</div>
+                  </div>
+                </div>
+                <div class="counter">
+                  <button class="counter-btn" id="dec-adults" onclick="changePass('adults',-1)" disabled>−</button>
+                  <span class="counter-val" id="val-adults">1</span>
+                  <button class="counter-btn" id="inc-adults" onclick="changePass('adults',1)">+</button>
+                </div>
+              </div>
+              <!-- Jóvenes -->
+              <div class="pass-row-big">
+                <div class="pass-row-info">
+                  <div class="pass-row-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <div>
+                    <div class="pass-type-name">Jóvenes</div>
+                    <div class="pass-type-age">11 a 14 años</div>
+                  </div>
+                </div>
+                <div class="counter">
+                  <button class="counter-btn" id="dec-teens" onclick="changePass('teens',-1)" disabled>−</button>
+                  <span class="counter-val" id="val-teens">0</span>
+                  <button class="counter-btn" id="inc-teens" onclick="changePass('teens',1)">+</button>
+                </div>
+              </div>
+              <!-- Niños -->
+              <div class="pass-row-big">
+                <div class="pass-row-info">
+                  <div class="pass-row-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <div>
+                    <div class="pass-type-name">Niños</div>
+                    <div class="pass-type-age">2 a 10 años</div>
+                  </div>
+                </div>
+                <div class="counter">
+                  <button class="counter-btn" id="dec-children" onclick="changePass('children',-1)" disabled>−</button>
+                  <span class="counter-val" id="val-children">0</span>
+                  <button class="counter-btn" id="inc-children" onclick="changePass('children',1)">+</button>
+                </div>
+              </div>
+              <!-- Bebés -->
+              <div class="pass-row-big">
+                <div class="pass-row-info">
+                  <div class="pass-row-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"/><path d="M11 16h2"/><path d="M12 2a5 5 0 0 1 5 5c0 2.5-1.5 4.5-3.5 5.5A5 5 0 0 1 7 7a5 5 0 0 1 5-5z"/></svg>
+                  </div>
+                  <div>
+                    <div class="pass-type-name">Bebés</div>
+                    <div class="pass-type-age">Menores de 2 años · Sin asiento</div>
+                  </div>
+                </div>
+                <div class="counter">
+                  <button class="counter-btn" id="dec-infants" onclick="changePass('infants',-1)" disabled>−</button>
+                  <span class="counter-val" id="val-infants">0</span>
+                  <button class="counter-btn" id="inc-infants" onclick="changePass('infants',1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="infantsNotice" class="infants-notice" hidden>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <p><strong>Bebés en brazos</strong>Los bebés viajan en brazos del adulto sin asiento asignado. No se requiere formulario adicional.</p>
+            </div>
+          </div>
+
+          <!-- Datos del pasajero principal -->
+          <div class="booking-card">
+            <div class="booking-card-head">
+              <div class="booking-card-icon icon-green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <h3>Datos del pasajero principal</h3>
+                <p>Adulto · Contacto de la reserva</p>
+              </div>
+            </div>
+
+            <form id="passengerForm" novalidate>
+              <div class="form-row" style="margin-bottom:.85rem">
+                <div class="form-group">
+                  <label for="firstName">Nombres *</label>
+                  <input id="firstName" class="form-input" type="text" placeholder="Ej: Carlos Andrés" autocomplete="given-name" />
+                </div>
+                <div class="form-group">
+                  <label for="lastName">Apellidos *</label>
+                  <input id="lastName" class="form-input" type="text" placeholder="Ej: Ramírez López" autocomplete="family-name" />
+                </div>
+              </div>
+              <div class="form-row" style="margin-bottom:.85rem">
+                <div class="form-group">
+                  <label for="email">Correo electrónico *</label>
+                  <input id="email" class="form-input" type="email" placeholder="correo@email.com" autocomplete="email" />
+                </div>
+                <div class="form-group">
+                  <label for="phone">Teléfono *</label>
+                  <input id="phone" class="form-input" type="tel" placeholder="+57 300 000 0000" autocomplete="tel" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="docType">Tipo de documento</label>
+                  <select id="docType" class="form-input">
+                    <option>Cédula de ciudadanía</option>
+                    <option>Pasaporte</option>
+                    <option>Cédula de extranjería</option>
+                    <option>Tarjeta de identidad</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="docNumber">Número de documento *</label>
+                  <input id="docNumber" class="form-input" type="text" placeholder="Ej: 1012345678" />
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div id="formError" class="search-error" hidden></div>
+          <div class="booking-nav">
+            <button class="btn btn-primary" onclick="goStep(1)">Continuar: Elegir asientos →</button>
+          </div>
+        </div>
+
+        <!-- ═══ STEP 1 – Asientos ═══ -->
+        <div class="step-pane" id="pane1">
+          <div class="booking-card">
+            <div class="booking-card-head">
+              <div class="booking-card-icon icon-gold">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              </div>
+              <div>
+                <h3>Selección de asientos</h3>
+                <p id="seatsNeededLabel">Selecciona 1 asiento para tu vuelo</p>
+              </div>
+            </div>
+
+            <div class="seat-map-wrap">
+              <div class="seat-map" id="seatMap"></div>
+            </div>
+
+            <div class="seat-legend">
+              <div class="seat-legend-item">
+                <div class="legend-swatch" style="background:#eff6ff;border-color:#bfdbfe"></div>
+                Disponible
+              </div>
+              <div class="seat-legend-item">
+                <div class="legend-swatch" style="background:#0B3D91;border-color:#0B3D91"></div>
+                Seleccionado
+              </div>
+              <div class="seat-legend-item">
+                <div class="legend-swatch" style="background:#fefce8;border-color:#fde047"></div>
+                Ejecutiva
+              </div>
+              <div class="seat-legend-item">
+                <div class="legend-swatch" style="background:#f3f4f6;border-color:#e5e7eb"></div>
+                Ocupado
+              </div>
+            </div>
+
+            <p id="seatSelStatus" style="margin-top:.85rem;font-size:.8rem;color:var(--col-primary);font-weight:600;"></p>
+          </div>
+
+          <div class="booking-nav">
+            <button class="btn btn-outline-white btn-sm" style="border-color:var(--col-gray-300);color:var(--col-gray-700)" onclick="goStep(0)">← Atrás</button>
+            <button class="btn btn-primary" onclick="goStep(2)">Continuar: Pago →</button>
+          </div>
+        </div>
+
+        <!-- ═══ STEP 2 – Pago ═══ -->
+        <div class="step-pane" id="pane2">
+          <div class="booking-card">
+            <div class="booking-card-head">
+              <div class="booking-card-icon icon-green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              </div>
+              <div>
+                <h3>Información de pago</h3>
+                <p>Tu información está protegida con cifrado SSL</p>
+              </div>
+            </div>
+
+            <form id="paymentForm" novalidate>
+              <div class="form-group" style="margin-bottom:.85rem">
+                <label for="cardNumber">Número de tarjeta *</label>
+                <input id="cardNumber" class="form-input" type="text" placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number" />
+              </div>
+              <div class="form-group" style="margin-bottom:.85rem">
+                <label for="cardName">Nombre en la tarjeta *</label>
+                <input id="cardName" class="form-input" type="text" placeholder="Ej: CARLOS A RAMIREZ" autocomplete="cc-name" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="expiry">Fecha de vencimiento *</label>
+                  <input id="expiry" class="form-input" type="text" placeholder="MM/AA" maxlength="5" autocomplete="cc-exp" />
+                </div>
+                <div class="form-group">
+                  <label for="cvv">CVV *</label>
+                  <input id="cvv" class="form-input" type="text" placeholder="123" maxlength="4" autocomplete="cc-csc" />
+                </div>
+              </div>
+            </form>
+
+            <div class="payment-security">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Pago seguro con cifrado SSL de 256 bits
+            </div>
+            <div class="payment-logos">
+              <div class="pay-logo">VISA</div>
+              <div class="pay-logo">MC</div>
+              <div class="pay-logo">AMEX</div>
+              <div class="pay-logo">PSE</div>
+            </div>
+          </div>
+
+          <div id="payError" class="search-error" hidden></div>
+          <div class="booking-nav">
+            <button class="btn btn-outline-white btn-sm" style="border-color:var(--col-gray-300);color:var(--col-gray-700)" onclick="goStep(1)">← Atrás</button>
+            <button class="btn btn-primary" onclick="goStep(3)">Confirmar y pagar →</button>
+          </div>
+        </div>
+
+        <!-- ═══ STEP 3 – Confirmación ═══ -->
+        <div class="step-pane" id="pane3">
+          <div class="booking-card" style="text-align:center;padding:2.5rem 1.5rem">
+            <div class="confirm-circle">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h2 style="color:var(--col-gray-900);font-size:1.35rem;margin-bottom:.4rem">¡Reserva confirmada!</h2>
+            <p style="color:var(--col-gray-500);font-size:.875rem;margin-bottom:1.5rem">Tu reserva ha sido procesada exitosamente. Recibirás un correo de confirmación en breve.</p>
+
+            <div style="background:var(--col-gray-50);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.5rem;text-align:left;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+                <span style="font-size:.78rem;color:var(--col-gray-500)">Código de reserva</span>
+                <span id="bookingCode" style="font-size:1.1rem;font-weight:800;color:var(--col-primary);letter-spacing:.1em">TS-XXXXXX</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+                <span style="font-size:.78rem;color:var(--col-gray-500)">Pasajero</span>
+                <span id="confirmName" style="font-size:.875rem;font-weight:600;color:var(--col-gray-800)">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:.78rem;color:var(--col-gray-500)">Vuelo</span>
+                <span id="confirmFlight" style="font-size:.875rem;font-weight:600;color:var(--col-gray-800)">BOG → MAD</span>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center">
+              <a href="gestionar.html" class="btn btn-primary">Ver mi reserva</a>
+              <a href="checkin.html" class="btn btn-cyan">Hacer check-in</a>
+              <a href="index.html" class="btn" style="border:1.5px solid var(--col-gray-300);color:var(--col-gray-700)">Volver al inicio</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /booking-main -->
+
+      <!-- ── SIDEBAR ── -->
+      <aside class="booking-sidebar">
+        <div class="sidebar-flight">
+          <h4>Resumen del vuelo</h4>
+
+          <div class="sflight-route">
+            <div>
+              <div class="sflight-code" id="sb-origin">BOG</div>
+              <div class="sflight-time" id="sb-dep">22:30</div>
+            </div>
+            <div style="flex:1;text-align:center">
+              <div class="sflight-line"></div>
+              <div style="font-size:.65rem;color:var(--col-gray-400);margin-top:.2rem" id="sb-stops">Directo</div>
+            </div>
+            <div style="text-align:right">
+              <div class="sflight-code" id="sb-dest">MAD</div>
+              <div class="sflight-time" id="sb-arr">14:15</div>
+            </div>
+          </div>
+
+          <div class="sflight-detail">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span id="sb-date">15 Mar 2026</span>
+          </div>
+          <div class="sflight-detail">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span id="sb-duration">11h 45min</span>
+          </div>
+          <div class="sflight-detail">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <span id="sb-cabin">Clase Económica</span>
+          </div>
+
+          <hr class="sflight-divider" />
+
+          <div class="sflight-price-row">
+            <span id="sb-passLabel">1 adulto</span>
+            <span id="sb-basePrice">COP 850.000</span>
+          </div>
+          <div class="sflight-price-row">
+            <span>Tasas e impuestos</span>
+            <span id="sb-taxes">COP 152.000</span>
+          </div>
+          <div class="sflight-price-row total">
+            <span>Total</span>
+            <span id="sb-total">COP 1.002.000</span>
+          </div>
+        </div>
+
+        <!-- Amenidades -->
+        <div class="sidebar-flight" style="padding:1rem 1.25rem">
+          <h4>Incluye</h4>
+          <div class="flight-amenities">
+            <div class="amenity-pill">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Wi-Fi
+            </div>
+            <div class="amenity-pill">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+              Comida
+            </div>
+            <div class="amenity-pill">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              Entretenimiento
+            </div>
+            <div class="amenity-pill">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              Equipaje 23kg
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div><!-- /booking-grid -->
+  </div><!-- /container -->
+
+</main>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-logo">
+          <div class="footer-logo-icon">
+            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.1)"/>
+              <path d="M8 22 L15 10 L18 15 L22 10 L28 22" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <circle cx="18" cy="22" r="3" fill="white" opacity=".9"/>
+            </svg>
+          </div>
+          <div class="footer-logo-text">
+            <span class="footer-logo-brand">TERRA SKY</span>
+            <span class="footer-logo-sub">AEROLÍNEA</span>
+          </div>
+        </div>
+        <p class="footer-tagline">Conectamos Colombia con el mundo. Vuelos seguros, cómodos y a los mejores precios.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Vuelos</h4>
+        <ul>
+          <li><a href="resultados.html">Buscar vuelos</a></li>
+          <li><a href="checkin.html">Check-in online</a></li>
+          <li><a href="estado.html">Estado del vuelo</a></li>
+          <li><a href="gestionar.html">Gestionar reserva</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Ayuda</h4>
+        <ul>
+          <li><a href="#">Preguntas frecuentes</a></li>
+          <li><a href="#">Políticas de equipaje</a></li>
+          <li><a href="#">Centro de ayuda</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Empresa</h4>
+        <ul>
+          <li><a href="#">Acerca de Terra Sky</a></li>
+          <li><a href="#">Destinos</a></li>
+          <li><a href="#">Trabaja con nosotros</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">
+      <div class="footer-bottom-inner">
+        <span>© 2025 Terra Sky Aerolínea. Todos los derechos reservados.</span>
+        <div class="footer-bottom-links">
+          <a href="#">Privacidad</a>
+          <a href="#">Términos</a>
+          <a href="#">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── State ──
+  const state = {
+    step: 0,
+    passengers: { adults: 1, teens: 0, children: 0, infants: 0 },
+    selectedSeats: [],
+    form: {}
+  };
+
+  const SEAT_ROWS = 10;
+  const COLUMNS = ['A','B','C','D','E','F'];
+  const OCCUPIED = ['1A','1C','2B','2F','3D','4A','4E','5C','6B','6F','7A','8D'];
+  const BUSINESS_ROWS = [1, 2];
+
+  // Read URL params
+  function readParams() {
+    const p = new URLSearchParams(location.search);
+    const origin = p.get('origin') || 'BOG';
+    const dest   = p.get('dest')   || 'MAD';
+    const dep    = p.get('dep')    || '15 Mar 2026';
+    const cabin  = p.get('cabin')  || 'Económica';
+    const adults = parseInt(p.get('adults') || '1', 10);
+
+    document.getElementById('sb-origin').textContent = origin;
+    document.getElementById('sb-dest').textContent   = dest;
+    document.getElementById('sb-date').textContent   = dep;
+    document.getElementById('sb-cabin').textContent  = 'Clase ' + cabin;
+    document.getElementById('flightSummaryBar').textContent = origin + ' → ' + dest + ' · ' + dep + ' · Clase ' + cabin;
+
+    // Set passengers from params
+    state.passengers.adults = adults || 1;
+    document.getElementById('val-adults').textContent = state.passengers.adults;
+    updateDecBtn('adults', 1);
+    updateSidebar();
+  }
+
+  // ── Passenger counters ──
+  window.changePass = function (type, delta) {
+    const min = type === 'adults' ? 1 : 0;
+    state.passengers[type] = Math.max(min, state.passengers[type] + delta);
+    document.getElementById('val-' + type).textContent = state.passengers[type];
+    updateDecBtn(type, min);
+    document.getElementById('infantsNotice').hidden = state.passengers.infants === 0;
+    updateSidebar();
+  };
+
+  function updateDecBtn(type, min) {
+    const m = (min !== undefined) ? min : (type === 'adults' ? 1 : 0);
+    document.getElementById('dec-' + type).disabled = state.passengers[type] <= m;
+  }
+
+  function totalWithSeats() {
+    return state.passengers.adults + state.passengers.teens + state.passengers.children;
+  }
+
+  function updateSidebar() {
+    const base = 850000;
+    const taxes = 152000;
+    const n = state.passengers.adults + state.passengers.teens + state.passengers.children + state.passengers.infants;
+    const fmt = v => 'COP ' + new Intl.NumberFormat('es-CO').format(v);
+    document.getElementById('sb-passLabel').textContent = n + ' pasajero' + (n !== 1 ? 's' : '');
+    document.getElementById('sb-basePrice').textContent = fmt(base * (state.passengers.adults + state.passengers.teens + state.passengers.children));
+    document.getElementById('sb-taxes').textContent    = fmt(taxes * n);
+    document.getElementById('sb-total').textContent    = fmt((base * (state.passengers.adults + state.passengers.teens + state.passengers.children)) + (taxes * n));
+  }
+
+  // ── Step navigation ──
+  window.goStep = function (targetStep) {
+    if (targetStep === 1) {
+      const err = validatePassengerForm();
+      if (err) { showError('formError', err); return; }
+      hideError('formError');
+    }
+    if (targetStep === 3) {
+      const err = validatePayment();
+      if (err) { showError('payError', err); return; }
+      hideError('payError');
+    }
+
+    // Update DOM
+    document.getElementById('pane' + state.step).classList.remove('active');
+    document.getElementById('pane' + targetStep).classList.add('active');
+
+    // Update step indicator
+    const items = document.querySelectorAll('.step-item');
+    items.forEach((item, i) => {
+      item.classList.remove('active', 'done');
+      if (i < targetStep) {
+        item.classList.add('done');
+        item.querySelector('.step-circle').innerHTML = '✓';
+      } else if (i === targetStep) {
+        item.classList.add('active');
+        item.querySelector('.step-circle').textContent = i + 1;
+      } else {
+        item.querySelector('.step-circle').textContent = i + 1;
+      }
+    });
+
+    state.step = targetStep;
+
+    // Build seat map on step 1
+    if (targetStep === 1) buildSeatMap();
+
+    // Generate confirmation code on step 3
+    if (targetStep === 3) generateConfirmation();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // ── Validation ──
+  function validatePassengerForm() {
+    const fields = ['firstName','lastName','email','phone','docNumber'];
+    for (const id of fields) {
+      const el = document.getElementById(id);
+      const val = el.value.trim();
+      if (!val) {
+        el.classList.add('error');
+        el.focus();
+        return 'Por favor completa todos los campos obligatorios.';
+      }
+      el.classList.remove('error');
+    }
+    const email = document.getElementById('email').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('email').classList.add('error');
+      return 'Ingresa un correo electrónico válido.';
+    }
+    return null;
+  }
+
+  function validatePayment() {
+    const fields = ['cardNumber','cardName','expiry','cvv'];
+    for (const id of fields) {
+      const el = document.getElementById(id);
+      if (!el.value.trim()) {
+        el.classList.add('error');
+        el.focus();
+        return 'Por favor completa los datos de pago.';
+      }
+      el.classList.remove('error');
+    }
+    return null;
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.hidden = false;
+  }
+  function hideError(id) {
+    document.getElementById(id).hidden = true;
+  }
+
+  // ── Seat map ──
+  function buildSeatMap() {
+    const total = totalWithSeats();
+    document.getElementById('seatsNeededLabel').textContent =
+      'Selecciona ' + total + ' asiento' + (total !== 1 ? 's' : '') + ' para tu vuelo';
+
+    const map = document.getElementById('seatMap');
+    map.innerHTML = '';
+
+    // Column headers
+    const headerRow = document.createElement('div');
+    headerRow.className = 'seat-header-row';
+    COLUMNS.forEach((col, i) => {
+      const lbl = document.createElement('div');
+      lbl.className = 'seat-col-lbl';
+      lbl.textContent = col;
+      headerRow.appendChild(lbl);
+      if (i === 2) {
+        const aisle = document.createElement('div');
+        aisle.className = 'seat-aisle';
+        headerRow.appendChild(aisle);
+      }
+    });
+    map.appendChild(headerRow);
+
+    // Rows
+    for (let r = 1; r <= SEAT_ROWS; r++) {
+      const row = document.createElement('div');
+      row.className = 'seat-row';
+
+      const num = document.createElement('div');
+      num.className = 'seat-row-num';
+      num.textContent = r;
+      row.appendChild(num);
+
+      COLUMNS.forEach((col, i) => {
+        const seatId = r + col;
+        const btn = document.createElement('button');
+        btn.className = 'seat-btn';
+        btn.type = 'button';
+        btn.dataset.seat = seatId;
+
+        if (OCCUPIED.includes(seatId)) {
+          btn.className += ' seat-occupied';
+          btn.textContent = '✕';
+          btn.disabled = true;
+        } else if (state.selectedSeats.includes(seatId)) {
+          btn.className += ' seat-selected';
+          btn.textContent = seatId;
+        } else if (BUSINESS_ROWS.includes(r)) {
+          btn.className += ' seat-business';
+          btn.textContent = seatId;
+          btn.addEventListener('click', () => toggleSeat(seatId));
+        } else {
+          btn.className += ' seat-available';
+          btn.textContent = seatId;
+          btn.addEventListener('click', () => toggleSeat(seatId));
+        }
+
+        row.appendChild(btn);
+
+        if (i === 2) {
+          const aisle = document.createElement('div');
+          aisle.className = 'seat-aisle';
+          row.appendChild(aisle);
+        }
+      });
+
+      map.appendChild(row);
+    }
+    updateSeatStatus();
+  }
+
+  function toggleSeat(seatId) {
+    const total = totalWithSeats();
+    const idx = state.selectedSeats.indexOf(seatId);
+    if (idx >= 0) {
+      state.selectedSeats.splice(idx, 1);
+    } else {
+      if (state.selectedSeats.length >= total) return;
+      state.selectedSeats.push(seatId);
+    }
+    buildSeatMap();
+  }
+
+  function updateSeatStatus() {
+    const total = totalWithSeats();
+    const sel = state.selectedSeats.length;
+    const el = document.getElementById('seatSelStatus');
+    el.textContent = sel + ' de ' + total + ' asientos seleccionados: ' + (state.selectedSeats.join(', ') || '—');
+  }
+
+  // ── Confirmation ──
+  function generateConfirmation() {
+    const code = 'TS-' + Math.random().toString(36).substring(2,8).toUpperCase();
+    document.getElementById('bookingCode').textContent = code;
+    const fn = document.getElementById('firstName').value.trim();
+    const ln = document.getElementById('lastName').value.trim();
+    document.getElementById('confirmName').textContent = fn + ' ' + ln;
+    const origin = document.getElementById('sb-origin').textContent;
+    const dest   = document.getElementById('sb-dest').textContent;
+    document.getElementById('confirmFlight').textContent = origin + ' → ' + dest;
+  }
+
+  // ── Card number formatting ──
+  const cardInput = document.getElementById('cardNumber');
+  if (cardInput) {
+    cardInput.addEventListener('input', function () {
+      let val = this.value.replace(/\D/g, '').substring(0, 16);
+      this.value = val.replace(/(.{4})/g, '$1 ').trim();
+    });
+  }
+
+  const expiryInput = document.getElementById('expiry');
+  if (expiryInput) {
+    expiryInput.addEventListener('input', function () {
+      let val = this.value.replace(/\D/g, '').substring(0, 4);
+      if (val.length >= 3) val = val.substring(0,2) + '/' + val.substring(2);
+      this.value = val;
+    });
+  }
+
+  // ── Hamburger ──
+  const ham = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  if (ham) {
+    ham.addEventListener('click', () => {
+      const open = ham.classList.toggle('open');
+      ham.setAttribute('aria-expanded', open);
+      mobileNav.hidden = !open;
+    });
+  }
+
+  // ── Init ──
+  readParams();
+  updateDecBtn('teens', 0);
+  updateDecBtn('children', 0);
+  updateDecBtn('infants', 0);
+
+})();
+</script>
+<script src="js/brand.js"></script>
+</body>
+</html>
